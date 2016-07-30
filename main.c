@@ -4,8 +4,6 @@
 #include <sys/stat.h>
 #include <time.h>
 
-
-//TODO verlagen zonder segfault
 #define MAXSTRING 500 //limit Rabo is 50
 
 /*	Remco Pronk, 26-07-16 
@@ -46,18 +44,6 @@ Example 2 result:
 char *removeQuotes(char string[]) {
     int counter = ccStrLength(string);
 
-/*
-
-    string = &string[1];
-    string[ccStrLength(string)-1] = string[ccStrLength(string)];
-
-    printf("\nString is now %s\n", string);
-
-
-
-*/
-
-
     while (counter > -1) {
         if (string[counter] == '"') {
             string[counter] = ' ';
@@ -69,7 +55,17 @@ char *removeQuotes(char string[]) {
     return string;
 }
 
+char *removeQuotes2(char string[]) {
+    string = &string[1];
+    string[ccStrLength(string) - 1] = string[ccStrLength(string)];
+
+    printf("\nString is now %s\n", string);
+
+    return string;
+}
+
 void reformatString(char input[], FILE *outputFilePointer) {
+    //TODO replace with a 2D array
     char account[MAXSTRING];
     char unused[MAXSTRING];
     char date[MAXSTRING];
@@ -87,6 +83,8 @@ void reformatString(char input[], FILE *outputFilePointer) {
            description);
 
     //printf("CD is %s\n",creditdebet);
+    //account = removeQuotes2(account);
+    printf("Account is now %s\n\n", account);
 
     //combine comment and description
     char *fullComment = concat(comment, description);
@@ -125,8 +123,6 @@ void readInput(FILE *ifp, FILE *ofp) {
         //reformat the the line we just read
         reformatString(storage, ofp);
 
-
-        //TODO check of maxstring hier kan
     } while (fgets(storage, MAXSTRING, ifp) != NULL); //scan next line
 
     //Done with the file, close it.
@@ -138,9 +134,6 @@ int main(int argc, char *argv[]) {
     FILE *ifp;
     FILE *ofp;
 
-    //TODO check for ini file
-    //TODO create empty ini file if no ini file
-
 
 
     //In case of no inputfile given, the program can not work.
@@ -149,6 +142,22 @@ int main(int argc, char *argv[]) {
         getchar(); //to not close application without user interaction
         return (0);
     }
+
+    //TODO create empty ini file if no ini file
+    //TODO read ini file for settings
+
+    FILE* fpSettings = fopen("settingsYNABConverter.ini", "r+"); //Allow reading AND writing
+    if(fpSettings) {
+        printf("Setting file exists.\n");
+        fclose(fpSettings);
+    }
+    else{
+        printf("No setting file exists, creating one.\n");
+        FILE* opSettings = fopen("settingsYNABConverter.ini", "w");
+        fprintf(opSettings, "Test!\n");
+
+    }
+
 
     //Open the inputfile and save it to inputFilePointer
     ifp = fopen(argv[1], "r");
@@ -162,7 +171,7 @@ int main(int argc, char *argv[]) {
 
 
     //end the application
-    //printf("\nThe application finished. Press any key to continue.");
+    printf("\nThe application finished. Press any key to continue.");
     //getchar(); //to not close application without user interaction
     return (0);
 
