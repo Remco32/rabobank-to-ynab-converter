@@ -5,6 +5,10 @@
 #include <time.h>
 
 #define MAXSTRING 500 //limit Rabo is 50
+#define ACCOUNTDEBUG " NL12RABO3456789012 "
+
+char targetAccount[MAXSTRING];
+
 
 /*	Remco Pronk, 26-07-16 
 	Converts the bankstatement format of the Rabobank to a csv-file that is readable by YNAB */
@@ -66,6 +70,7 @@ char *removeQuotes2(char string[]) {
 
 void reformatString(char input[], FILE *outputFilePointer) {
     //TODO replace with a 2D array
+    //TODO read formatting from ini file
     char account[MAXSTRING];
     char unused[MAXSTRING];
     char date[MAXSTRING];
@@ -84,25 +89,30 @@ void reformatString(char input[], FILE *outputFilePointer) {
 
     //printf("CD is %s\n",creditdebet);
     //account = removeQuotes2(account);
-    printf("Account is now %s\n\n", account);
+
 
     //combine comment and description
     char *fullComment = concat(comment, description);
 
-    //TODO filter certain numbers/allow only certain banknumbers
+    //allow only certain banknumber
 
-    //print to file
-    //Output order is different for credit and debet
-    if (creditdebet[0] == 'C') {
-        printf("(Datum) %s || (Naam gever) %s || (Categorie) || (Comment) %s || (Outflow) || (Inflow) %s\n", date,
-               nameReceiver, fullComment, amount);
-        //We don't fill in the category slot
-        fprintf(outputFilePointer, "%s,%s,,%s,,%s\n", date, nameReceiver, fullComment, amount);
-    }
-    if (creditdebet[0] == 'D') {
-        printf("(Datum) %s || (Naam ontvanger) %s || (Categorie) || (Comment) %s || (Outflow) %s || (Inflow) \n", date,
-               nameReceiver, fullComment, amount);
-        fprintf(outputFilePointer, "%s,%s,,%s,%s,\n", date, nameReceiver, fullComment, amount);
+    if (strcmp(ACCOUNTDEBUG, account) == 0) {
+
+
+        //print to file
+        //Output order is different for credit and debet
+        if (creditdebet[0] == 'C') {
+            printf("(Datum) %s || (Naam gever) %s || (Categorie) || (Comment) %s || (Outflow) || (Inflow) %s\n", date,
+                   nameReceiver, fullComment, amount);
+            //We don't fill in the category slot
+            fprintf(outputFilePointer, "%s,%s,,%s,,%s\n", date, nameReceiver, fullComment, amount);
+        }
+        if (creditdebet[0] == 'D') {
+            printf("(Datum) %s || (Naam ontvanger) %s || (Categorie) || (Comment) %s || (Outflow) %s || (Inflow) \n",
+                   date,
+                   nameReceiver, fullComment, amount);
+            fprintf(outputFilePointer, "%s,%s,,%s,%s,\n", date, nameReceiver, fullComment, amount);
+        }
     }
 
 }
@@ -130,15 +140,41 @@ void readInput(FILE *ifp, FILE *ofp) {
 }
 
 void stopProgramAfterInput() {
-    printf("\nThe application finished. Press any key to continue.");
+    printf("\nThe application has finished. Press any key to continue.");
     getchar(); //to not close application without user interaction
     exit(0);
 }
 
+void readSettings() {
+
+    char unused[MAXSTRING];
+    char line[MAXSTRING];
+    //TODO read ini file for settings
+
+    FILE *fpSettings = fopen("settingsYNABConverter.ini", "r+"); //Allow reading AND writing
+    if (fpSettings) {
+        printf("Setting file exists.\n");
+
+    }
+    else { //No file exists
+        printf("No setting file exists, creating one...\n");
+        //create new ini file
+        FILE *opSettings = fopen("settingsYNABConverter.ini", "w");
+
+        //populate file
+        fprintf(opSettings, "AccountnumberToUse=\nFormatting=");
+
+        printf("Settingfile created in the directory of the program named 'settingsYNABConverter.ini'. Manually edit the file to add an accountnumber to use with this program.\n");
+        stopProgramAfterInput();
+    }
+}
+
+//TODO clean up main: make functions
 int main(int argc, char *argv[]) {
     //reserve memory for input and output
     FILE *ifp;
     FILE *ofp;
+
 
 
 
@@ -148,30 +184,12 @@ int main(int argc, char *argv[]) {
         stopProgramAfterInput();
     }
 
-    //TODO read ini file for settings
-
-    FILE* fpSettings = fopen("settingsYNABConverter.ini", "r+"); //Allow reading AND writing
-    if(fpSettings) {
-        printf("Setting file exists.\n");
-        //Read until '=' symbol
-        fclose(fpSettings);
-    }
-    else{
-        printf("No setting file exists, creating one.\n");
-        //create new ini file
-        FILE* opSettings = fopen("settingsYNABConverter.ini", "w");
-        //populate file
-        fprintf(opSettings, "AccountnumberToUse=\nFormatting=");
-        printf("Settingfile create in the directory of the program named 'settingsYNABConverter.ini'. Manually edit the file to add an accountnumber to use with this program.\n");
-        exit(0);
-
-    }
+    readSettings();
 
 
     //Open the inputfile and save it to inputFilePointer
     ifp = fopen(argv[1], "r");
     //Create a file to write to: outputFilePointer
-    //TODO custom outputfilename
     ofp = fopen("output.csv", "w");
     //read, parse and reformat the input
     readInput(ifp, ofp);
@@ -181,6 +199,5 @@ int main(int argc, char *argv[]) {
 
     //end the application
     exit(0);
-
 
 }
