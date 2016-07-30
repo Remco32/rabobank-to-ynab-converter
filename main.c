@@ -129,6 +129,12 @@ void readInput(FILE *ifp, FILE *ofp) {
     fclose(ifp);
 }
 
+void stopProgramAfterInput() {
+    printf("\nThe application finished. Press any key to continue.");
+    getchar(); //to not close application without user interaction
+    exit(0);
+}
+
 int main(int argc, char *argv[]) {
     //reserve memory for input and output
     FILE *ifp;
@@ -138,23 +144,26 @@ int main(int argc, char *argv[]) {
 
     //In case of no inputfile given, the program can not work.
     if (argv[1] == NULL) {
-        printf("There was no inputfile.\nDrag and drop a file unto the executable to process it.\nPress any key to continue.");
-        getchar(); //to not close application without user interaction
-        return (0);
+        printf("There was no inputfile.\nDrag and drop a file unto the executable to process it.\n");
+        stopProgramAfterInput();
     }
 
-    //TODO create empty ini file if no ini file
     //TODO read ini file for settings
 
     FILE* fpSettings = fopen("settingsYNABConverter.ini", "r+"); //Allow reading AND writing
     if(fpSettings) {
         printf("Setting file exists.\n");
+        //Read until '=' symbol
         fclose(fpSettings);
     }
     else{
         printf("No setting file exists, creating one.\n");
+        //create new ini file
         FILE* opSettings = fopen("settingsYNABConverter.ini", "w");
-        fprintf(opSettings, "Test!\n");
+        //populate file
+        fprintf(opSettings, "AccountnumberToUse=\nFormatting=");
+        printf("Settingfile create in the directory of the program named 'settingsYNABConverter.ini'. Manually edit the file to add an accountnumber to use with this program.\n");
+        exit(0);
 
     }
 
@@ -171,8 +180,7 @@ int main(int argc, char *argv[]) {
 
 
     //end the application
-    printf("\nThe application finished. Press any key to continue.");
-    //getchar(); //to not close application without user interaction
-    return (0);
+    exit(0);
+
 
 }
