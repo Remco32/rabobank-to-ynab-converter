@@ -47,6 +47,35 @@ Example 2 result:
 
 */
 
+void reformatDate(char *date) {
+    char reformattedDate[11];
+
+    char year[5];
+    char month[3];
+    char day[3];
+    int i;
+
+    for (i = 0; i < 4; i++) {
+        year[i] = date[i];
+        reformattedDate[i + 6] = year[i];
+    }
+    year[4] = '\0';
+    for (i = 0; i < 2; i++) {
+        month[i] = date[i + 4];
+        reformattedDate[i + 3] = month[i];
+    }
+    month[2] = '\0';
+    for (i = 0; i < 2; i++) {
+        day[i] = date[i + 6];
+        reformattedDate[i] = day[i];
+    }
+    day[2] = '\0';
+    reformattedDate[2] = '/';
+    reformattedDate[5] = '/';
+    reformattedDate[10] = '\0';
+
+    strncpy(date, reformattedDate, 11);
+}
 
 void reformatAndPrintString(char *input, FILE *outputFilePointer) {
     int i; // iterator variable
@@ -66,7 +95,8 @@ void reformatAndPrintString(char *input, FILE *outputFilePointer) {
         input += 3;
     }
 
-    //TODO reformat date
+    //reformat date
+    reformatDate(seperatedInput[2]);
 
     //if there is no receiver , then it is a pin transaction: receiver becomes memo field, 2nd memo becomes first memo
     if (seperatedInput[6][0] == NULL) {
@@ -85,14 +115,14 @@ void reformatAndPrintString(char *input, FILE *outputFilePointer) {
         //print to file
         //Output order is different for credit and debet
         if (seperatedInput[3][0] == 'C') {
-            printf("(Datum) %s || (Naam gever) %s || (Categorie) || (Comment) %s%s || (Outflow) || (Inflow) %s\n\n",
+            printf("(Date) %s || (Name sender) %s || (Category) || (Comment) %s%s || (Outflow) || (Inflow) %s\n\n",
                    seperatedInput[2], seperatedInput[6], seperatedInput[10], seperatedInput[11], seperatedInput[4]);
             //We don't fill in the category slot
             fprintf(outputFilePointer, "%s,%s,,%s%s,,%s\n", seperatedInput[2], seperatedInput[6], seperatedInput[10],
                     seperatedInput[11], seperatedInput[4]);
         }
         if (seperatedInput[3][0] == 'D') {
-            printf("(Datum) %s || (Naam ontvanger) %s || (Categorie) || (Comment) %s%s || (Outflow) %s || (Inflow) \n\n",
+            printf("(Date) %s || (Name receiver) %s || (Category) || (Comment) %s%s || (Outflow) %s || (Inflow) \n\n",
                    seperatedInput[2], seperatedInput[6], seperatedInput[10], seperatedInput[11], seperatedInput[4]);
             fprintf(outputFilePointer, "%s,%s,,%s%s,%s,\n", seperatedInput[2], seperatedInput[6], seperatedInput[10],
                     seperatedInput[11], seperatedInput[4]);
