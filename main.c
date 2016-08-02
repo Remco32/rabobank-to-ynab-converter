@@ -3,11 +3,12 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <stdbool.h>
 
 #define MAXSTRING 500 //limit Rabo is 50
-#define ACCOUNTDEBUG " NL12RABO3456789012 "
+#define ACCOUNTDEBUG "NL12RABO3456789012"
+#define AMOUNTOFSLOTS 19 //rabo uses 19 slots
 
-char targetAccount[MAXSTRING];
 
 
 /*	Remco Pronk, 26-07-16 
@@ -59,61 +60,50 @@ char *removeQuotes(char string[]) {
     return string;
 }
 
-char *removeQuotes2(char string[]) {
-    string = &string[1];
-    string[ccStrLength(string) - 1] = string[ccStrLength(string)];
-
-    printf("\nString is now %s\n", string);
-
-    return string;
-}
 
 void reformatString(char input[], FILE *outputFilePointer) {
-    //TODO replace with a 2D array
-    //TODO read formatting from ini file
-    char account[MAXSTRING];
-    char unused[MAXSTRING];
-    char date[MAXSTRING];
-    char creditdebet[MAXSTRING];
-    char amount[MAXSTRING];
-    char nameReceiver[MAXSTRING];
-    char comment[MAXSTRING];
-    char description[MAXSTRING];
-
-    //remove airquotes
-    input = removeQuotes(input);
-
-    sscanf(input, "%[^','], %[^','], %[^','], %[^','], %[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^','],%[^',']",
-           account, unused, date, creditdebet, amount, unused, nameReceiver, unused, unused, unused, comment,
-           description);
-
-    //printf("CD is %s\n",creditdebet);
-    //account = removeQuotes2(account);
+    int i; // iterator variable
+    char seperatedInput[AMOUNTOFSLOTS][MAXSTRING]; // location to save the seperated data (date, amount, etc) from the input.
+    //TODO empty array at start //  memset(members, 0, sizeof members);
 
 
-    //combine comment and description
-    char *fullComment = concat(comment, description);
 
-    //allow only certain banknumber
+    //skip the first quotationmark
+    input++;
+    for (i = 0; i < AMOUNTOFSLOTS; i++) {
 
-    if (strcmp(ACCOUNTDEBUG, account) == 0) {
+        sscanf(input, "%[^'\"']", seperatedInput[i]);
+        input = strchr(input, '\"');
+        input += 3;
+        //printf("Next input will be %s\n", input);
+    }
 
 
+    /*
+    for(i = 0; i < AMOUNTOFSLOTS; i++){
+        printf("Inputslot %d is %s\n", i, seperatedInput[i]);
+    }
+     */
+
+
+    if (strcmp(ACCOUNTDEBUG, seperatedInput[0]) == 0) { //exact match
         //print to file
         //Output order is different for credit and debet
-        if (creditdebet[0] == 'C') {
-            printf("(Datum) %s || (Naam gever) %s || (Categorie) || (Comment) %s || (Outflow) || (Inflow) %s\n", date,
-                   nameReceiver, fullComment, amount);
+        if (seperatedInput[3][0] == 'C') {
+            printf("(Datum) %s || (Naam gever) %s || (Categorie) || (Comment) %s%s || (Outflow) || (Inflow) %s\n",
+                   seperatedInput[2], seperatedInput[6], seperatedInput[10], seperatedInput[11], seperatedInput[4]);
             //We don't fill in the category slot
-            fprintf(outputFilePointer, "%s,%s,,%s,,%s\n", date, nameReceiver, fullComment, amount);
-        }
-        if (creditdebet[0] == 'D') {
-            printf("(Datum) %s || (Naam ontvanger) %s || (Categorie) || (Comment) %s || (Outflow) %s || (Inflow) \n",
-                   date,
-                   nameReceiver, fullComment, amount);
-            fprintf(outputFilePointer, "%s,%s,,%s,%s,\n", date, nameReceiver, fullComment, amount);
+            fprintf(outputFilePointer, "%s,%s,,%s%s,,%s\n", seperatedInput[2], seperatedInput[6], seperatedInput[10],
+                    seperatedInput[11], seperatedInput[4]);
+    }
+        if (seperatedInput[3][0] == 'D') {
+            printf("(Datum) %s || (Naam ontvanger) %s || (Categorie) || (Comment) %s%s || (Outflow) %s || (Inflow) \n",
+                   seperatedInput[2], seperatedInput[6], seperatedInput[10], seperatedInput[11], seperatedInput[4]);
+            fprintf(outputFilePointer, "%s,%s,,%s%s,%s,\n", seperatedInput[2], seperatedInput[6], seperatedInput[10],
+                    seperatedInput[11], seperatedInput[4]);
         }
     }
+
 
 }
 
@@ -146,6 +136,8 @@ void stopProgramAfterInput() {
 }
 
 void readSettings() {
+
+    //TODO universeel maken door slot aan te laten geven welke info er zit
 
     char unused[MAXSTRING];
     char line[MAXSTRING];
