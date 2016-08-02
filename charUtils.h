@@ -5,7 +5,7 @@
 
 #pragma once
 
-//TODO see if still useful to have as header
+//TODO see if still useful to have as header - check for default lib with strLenght
 
 inline int ccStrLength(char* str)
 {

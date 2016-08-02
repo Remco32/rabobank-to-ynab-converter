@@ -2,15 +2,13 @@
 #include "charUtils.h"
 #include <string.h>
 #include <sys/stat.h>
-#include <time.h>
-#include <stdbool.h>
 
 #define ACCOUNTDEBUG "NL12RABO3456789012"
 #define MAXSTRING 30 //limit for a single slot is 30
 #define AMOUNTOFSLOTS 19 //rabo uses 19 slots
 #define MAXFULLSTRING 600 //limit for the whole string is MAXSTRING*AMOUNTOFSLOTS
 
-
+char selectedAccount[MAXSTRING];
 
 
 /*	Remco Pronk, 26-07-16 
@@ -100,7 +98,7 @@ void reformatAndPrintString(char *input, FILE *outputFilePointer) {
 
     //if there is no receiver , then it is a pin transaction: receiver becomes memo field, 2nd memo becomes first memo
     if (seperatedInput[6][0] == NULL) {
-        printf("There was no receiver: this is a pin transaction.\n");
+        printf("There was no receiver field: this is a pin transaction.\n");
 
         strncpy(seperatedInput[6], seperatedInput[10], MAXSTRING);
 
@@ -111,7 +109,7 @@ void reformatAndPrintString(char *input, FILE *outputFilePointer) {
         //printf("Strings are now %s and %s\n", seperatedInput[6], seperatedInput[10]);
     }
 
-    if (strcmp(ACCOUNTDEBUG, seperatedInput[0]) == 0) { //exact match with input
+    if (strcmp(selectedAccount, seperatedInput[0]) == 0) { //exact match with input
         //print to file
         //Output order is different for credit and debet
         if (seperatedInput[3][0] == 'C') {
@@ -162,7 +160,15 @@ void readSettings() {
 
     FILE *fpSettings = fopen("settingsYNABConverter.ini", "r+"); //Allow reading AND writing
     if (fpSettings) {
+        char input[MAXFULLSTRING];
         printf("Setting file exists.\n");
+
+        //read first line
+        fscanf(fpSettings, "%[^\n]", input);
+        //copy whatever is after the '=' to the used account number
+        strncpy(selectedAccount, strchr(input, '=') + 1, MAXSTRING);
+
+
     }
     else { //No file exists
         printf("No setting file exists, creating one...\n");
@@ -171,13 +177,14 @@ void readSettings() {
 
         //populate file
         fprintf(opSettings, "AccountnumberToUse=NL12RABO3456789012");
-        printf("Settingfile created in the directory of the program named 'settingsYNABConverter.ini'. Manually edit the file to add an accountnumber to use with this program.\n");
+        printf("Setting file created in the directory of the program named 'settingsYNABConverter.ini'. Manually edit the file to add an account number to use with this program.\n");
         fclose(opSettings);
         stopProgramAfterInput();
     }
 }
 
 //TODO clean up main: make functions
+//TODO warnings killen
 int main(int argc, char *argv[]) {
     //reserve memory for input and output
     FILE *ifp;
