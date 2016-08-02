@@ -2,7 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define ACCOUNTDEBUG "NL12RABO3456789012"
 #define MAXSTRING 30 //limit for a single slot is 30
 #define AMOUNTOFSLOTS 19 //rabo uses 19 slots
 #define MAXFULLSTRING 600 //limit for the whole string is MAXSTRING*AMOUNTOFSLOTS
