@@ -1,7 +1,6 @@
 #include <stdio.h>
-#include "charUtils.h"
 #include <string.h>
-#include <sys/stat.h>
+#include <stdlib.h>
 
 #define ACCOUNTDEBUG "NL12RABO3456789012"
 #define MAXSTRING 30 //limit for a single slot is 30
@@ -113,14 +112,14 @@ void reformatAndPrintString(char *input, FILE *outputFilePointer) {
         //print to file
         //Output order is different for credit and debet
         if (seperatedInput[3][0] == 'C') {
-            printf("(Date) %s || (Name sender) %s || (Category) || (Comment) %s%s || (Outflow) || (Inflow) %s\n\n",
+            printf("(Date) %s || (Name SENDER) %s || (Category) || (Comment) %s%s || (Outflow) || (Inflow) %s\n\n",
                    seperatedInput[2], seperatedInput[6], seperatedInput[10], seperatedInput[11], seperatedInput[4]);
             //We don't fill in the category slot
             fprintf(outputFilePointer, "%s,%s,,%s%s,,%s\n", seperatedInput[2], seperatedInput[6], seperatedInput[10],
                     seperatedInput[11], seperatedInput[4]);
         }
         if (seperatedInput[3][0] == 'D') {
-            printf("(Date) %s || (Name receiver) %s || (Category) || (Comment) %s%s || (Outflow) %s || (Inflow) \n\n",
+            printf("(Date) %s || (Name RECEIVER) %s || (Category) || (Comment) %s%s || (Outflow) %s || (Inflow) \n\n",
                    seperatedInput[2], seperatedInput[6], seperatedInput[10], seperatedInput[11], seperatedInput[4]);
             fprintf(outputFilePointer, "%s,%s,,%s%s,%s,\n", seperatedInput[2], seperatedInput[6], seperatedInput[10],
                     seperatedInput[11], seperatedInput[4]);
@@ -136,7 +135,7 @@ void readInput(FILE *ifp, FILE *ofp) {
     do {
         fscanf(ifp, "%[^\n]", inputLine);
         //Rabobank transaction files end with an empty line, we catch that here
-        if (ccStrLength(inputLine) == 1) {
+        if (strlen(inputLine) == 1) {
             return;
         }
         //reformat the the line we just read
@@ -155,9 +154,6 @@ void stopProgramAfterInput() {
 
 void readSettings() {
     //TODO make universal by making user provide the slot of each piece of information, and adding flags for certain cleanups (i.e remove quotationmarks, commas, etc)
-
-    //TODO read ini file for settings
-
     FILE *fpSettings = fopen("settingsYNABConverter.ini", "r+"); //Allow reading AND writing
     if (fpSettings) {
         char input[MAXFULLSTRING];
@@ -184,7 +180,6 @@ void readSettings() {
 }
 
 //TODO clean up main: make functions
-//TODO warnings killen
 int main(int argc, char *argv[]) {
     //reserve memory for input and output
     FILE *ifp;
