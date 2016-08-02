@@ -5,6 +5,8 @@
 
 #pragma once
 
+//TODO see if still useful to have as header
+
 inline int ccStrLength(char* str)
 {
 	int i;

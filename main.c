@@ -5,9 +5,11 @@
 #include <time.h>
 #include <stdbool.h>
 
-#define MAXSTRING 500 //limit Rabo is 50
 #define ACCOUNTDEBUG "NL12RABO3456789012"
+#define MAXSTRING 30 //limit for a single slot is 30
 #define AMOUNTOFSLOTS 19 //rabo uses 19 slots
+#define MAXFULLSTRING 600 //limit for the whole string is MAXSTRING*AMOUNTOFSLOTS
+
 
 
 
@@ -45,85 +47,73 @@ Example 2 result:
 
 */
 
-/* Replaces the airquotes from a string with a whitespaces */
-char *removeQuotes(char string[]) {
-    int counter = ccStrLength(string);
 
-    while (counter > -1) {
-        if (string[counter] == '"') {
-            string[counter] = ' ';
-            //TODO remove whitespaces, check code job
-        }
-        counter--;
-    }
-
-    return string;
-}
-
-
-void reformatString(char input[], FILE *outputFilePointer) {
+void reformatAndPrintString(char *input, FILE *outputFilePointer) {
     int i; // iterator variable
     char seperatedInput[AMOUNTOFSLOTS][MAXSTRING]; // location to save the seperated data (date, amount, etc) from the input.
-    //TODO empty array at start //  memset(members, 0, sizeof members);
 
-
+    //empty array at start
+    memset(seperatedInput, 0, sizeof seperatedInput);
 
     //skip the first quotationmark
     input++;
-    for (i = 0; i < AMOUNTOFSLOTS; i++) {
 
+    //read input to the array
+    for (i = 0; i < AMOUNTOFSLOTS; i++) {
         sscanf(input, "%[^'\"']", seperatedInput[i]);
         input = strchr(input, '\"');
+        //Skip the next quotationmark, comma and quotationmark by moving the pointer forwards
         input += 3;
-        //printf("Next input will be %s\n", input);
     }
 
+    //TODO reformat date
 
-    /*
-    for(i = 0; i < AMOUNTOFSLOTS; i++){
-        printf("Inputslot %d is %s\n", i, seperatedInput[i]);
+    //if there is no receiver , then it is a pin transaction: receiver becomes memo field, 2nd memo becomes first memo
+    if (seperatedInput[6][0] == NULL) {
+        printf("There was no receiver: this is a pin transaction.\n");
+
+        strncpy(seperatedInput[6], seperatedInput[10], MAXSTRING);
+
+        //empty memo1 - only memo2 gets printed this way
+        memset(seperatedInput[10], 0, MAXSTRING);
+
+
+        //printf("Strings are now %s and %s\n", seperatedInput[6], seperatedInput[10]);
     }
-     */
 
-
-    if (strcmp(ACCOUNTDEBUG, seperatedInput[0]) == 0) { //exact match
+    if (strcmp(ACCOUNTDEBUG, seperatedInput[0]) == 0) { //exact match with input
         //print to file
         //Output order is different for credit and debet
         if (seperatedInput[3][0] == 'C') {
-            printf("(Datum) %s || (Naam gever) %s || (Categorie) || (Comment) %s%s || (Outflow) || (Inflow) %s\n",
+            printf("(Datum) %s || (Naam gever) %s || (Categorie) || (Comment) %s%s || (Outflow) || (Inflow) %s\n\n",
                    seperatedInput[2], seperatedInput[6], seperatedInput[10], seperatedInput[11], seperatedInput[4]);
             //We don't fill in the category slot
             fprintf(outputFilePointer, "%s,%s,,%s%s,,%s\n", seperatedInput[2], seperatedInput[6], seperatedInput[10],
                     seperatedInput[11], seperatedInput[4]);
-    }
+        }
         if (seperatedInput[3][0] == 'D') {
-            printf("(Datum) %s || (Naam ontvanger) %s || (Categorie) || (Comment) %s%s || (Outflow) %s || (Inflow) \n",
+            printf("(Datum) %s || (Naam ontvanger) %s || (Categorie) || (Comment) %s%s || (Outflow) %s || (Inflow) \n\n",
                    seperatedInput[2], seperatedInput[6], seperatedInput[10], seperatedInput[11], seperatedInput[4]);
             fprintf(outputFilePointer, "%s,%s,,%s%s,%s,\n", seperatedInput[2], seperatedInput[6], seperatedInput[10],
                     seperatedInput[11], seperatedInput[4]);
         }
     }
-
-
 }
 
 void readInput(FILE *ifp, FILE *ofp) {
-    char storage[MAXSTRING];
+    char inputLine[MAXFULLSTRING];
 
-    //TODO other order of printing as well
     //Print first line
     fprintf(ofp, "Date,Payee,Category,Memo,Outflow,Inflow\n");
-
     do {
-        fscanf(ifp, "%[^\n]", storage);
+        fscanf(ifp, "%[^\n]", inputLine);
         //Rabobank transaction files end with an empty line, we catch that here
-        if (ccStrLength(storage) == 1) {
+        if (ccStrLength(inputLine) == 1) {
             return;
         }
         //reformat the the line we just read
-        reformatString(storage, ofp);
-
-    } while (fgets(storage, MAXSTRING, ifp) != NULL); //scan next line
+        reformatAndPrintString(inputLine, ofp);
+    } while (fgets(inputLine, MAXFULLSTRING, ifp) != NULL); //scan next line
 
     //Done with the file, close it.
     fclose(ifp);
@@ -136,17 +126,13 @@ void stopProgramAfterInput() {
 }
 
 void readSettings() {
+    //TODO make universal by making user provide the slot of each piece of information, and adding flags for certain cleanups (i.e remove quotationmarks, commas, etc)
 
-    //TODO universeel maken door slot aan te laten geven welke info er zit
-
-    char unused[MAXSTRING];
-    char line[MAXSTRING];
     //TODO read ini file for settings
 
     FILE *fpSettings = fopen("settingsYNABConverter.ini", "r+"); //Allow reading AND writing
     if (fpSettings) {
         printf("Setting file exists.\n");
-
     }
     else { //No file exists
         printf("No setting file exists, creating one...\n");
@@ -154,8 +140,7 @@ void readSettings() {
         FILE *opSettings = fopen("settingsYNABConverter.ini", "w");
 
         //populate file
-        fprintf(opSettings, "AccountnumberToUse=\nFormatting=");
-
+        fprintf(opSettings, "AccountnumberToUse=NL12RABO3456789012");
         printf("Settingfile created in the directory of the program named 'settingsYNABConverter.ini'. Manually edit the file to add an accountnumber to use with this program.\n");
         stopProgramAfterInput();
     }
@@ -167,15 +152,11 @@ int main(int argc, char *argv[]) {
     FILE *ifp;
     FILE *ofp;
 
-
-
-
     //In case of no inputfile given, the program can not work.
     if (argv[1] == NULL) {
         printf("There was no inputfile.\nDrag and drop a file unto the executable to process it.\n");
         stopProgramAfterInput();
     }
-
     readSettings();
 
 
@@ -191,5 +172,4 @@ int main(int argc, char *argv[]) {
 
     //end the application
     exit(0);
-
 }
