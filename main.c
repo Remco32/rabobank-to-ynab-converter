@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
     FILE *ifp;
     FILE *ofp;
 
-    readSettings();
+    readSettings();//
 
     //In case of no inputfile given, the program can not work.
     if (argv[1] == NULL) {
