@@ -184,12 +184,14 @@ int main(int argc, char *argv[]) {
     FILE *ifp;
     FILE *ofp;
 
+    readSettings();
+
     //In case of no inputfile given, the program can not work.
     if (argv[1] == NULL) {
         printf("There was no inputfile.\nDrag and drop a file unto the executable to process it.\n");
         stopProgramAfterInput();
     }
-    readSettings();
+
 
 
     //Open the inputfile and save it to inputFilePointer
