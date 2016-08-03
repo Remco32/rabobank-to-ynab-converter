@@ -4,7 +4,6 @@ project(RaboConverter3_Clion)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
 
 set(SOURCE_FILES
-    charUtils.h
     main.c)
 
 add_executable(RaboConverter3_Clion ${SOURCE_FILES})
